@@ -1,0 +1,48 @@
+function akar = ModFalsePos(f, a, b, eps)
+% Tulis jawaban anda dibawah garis
+% --------------------------------
+% sebuah fungsi pada MATLAB untuk mencetak akar hampiran akar dari fungsi 
+% dengan menggunakan metode Modifikasi Posisi Palsu menerima masukan 
+% suatu fungsi f(x), tebakan awal a dan b serta batas galat eps
+    fa = f(a);
+    fb = f(b);
+    % ALGORITMA 
+    if fa*fb > 0
+        disp("PROSES GAGAL")
+        akar = "tidak ditemukan";
+    else
+        clama = 2*b - a ;
+        kiri = 0;
+        kanan = 0;
+        akar = 0;
+        while akar == 0 
+            c = b - fb*(b-a) / (fb-fa);
+            fc = f(c);
+            if abs(fc) < 10^-10
+                akar = c;
+            else
+                if fa*fc < 0
+                    b = c;
+                    fb = fc;
+                    kanan = 0;
+                    kiri = kiri + 1;
+                    if kiri > 2
+                        fa = fa/2;
+                    end
+                else
+                    a = c;
+                    fa = fc;
+                    kiri = 0;
+                    kanan = kanan + 1;
+                    if kanan > 2
+                        fb = fb / 2;
+                    end
+                end
+            end
+            if abs(c - clama) < eps
+                akar = c;
+            end
+            clama = c;
+        end
+    end
+end
