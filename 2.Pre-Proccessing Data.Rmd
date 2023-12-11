@@ -1,0 +1,1712 @@
+---
+title: "Pre-Proccessing Data"
+author: "Carolin"
+date: '2023-09-04'
+output:
+  html_document:
+    theme: darkly
+    toc: true
+    number_sections: true
+    toc_float:
+      number_sections: true  
+    toc_depth: 3  
+    toc_include:
+      - default  
+      - level2  
+      - level3  
+---
+
+# Eksplorasi Data
+
+```{r}
+df <- read.csv("D:/Kuliah/Mat/TSA Kominfo/Praktikum/2.ChurnDetection.csv", header = TRUE, sep = ",")
+
+# Melihat struktur data
+cat("STRUKTUR :", "\n\n")
+str(df) 
+
+# Melihat ringkasan data
+cat("\n\n", "SUMMMARY :", "\n\n")
+summary(df)
+```
+
+```{R}
+summary(df$Total.day.calls)
+```
+
+## Histogram
+
+```{R}
+histogram <- hist(df$Total.day.calls, main="HISTOGRAM Total Calls (Day) ", xlab = "Days")
+
+cat("Breaks :", histogram$breaks, "\n")
+cat("Counts :", histogram$counts, "\n")
+cat("Mids :", histogram$mids, "\n")
+```
+
+```{R}
+hist(df$Total.day.calls, freq = FALSE, main="HISTOGRAM Total Calls", xlab = "Days")
+```
+
+```{R}
+histo.2 <- hist(df$Total.day.calls, freq = FALSE, breaks = 30, 
+                main="HISTOGRAM Total Calls", xlab = "Days")
+
+cat("BREAKS :", histo.2$breaks, "\n\n")
+```
+
+```{R}
+n <- length(df$Total.day.calls) # banyaknya amatan
+k1 <- sqrt(n) # akar kuadrat banyaknya amatan
+
+histo.3 <- hist(df$Total.day.calls, freq = FALSE, breaks = k1, 
+                main="HISTOGRAM Total Calls", xlab = "Days")
+
+cat("BREAKS :", histo.3$breaks, "\n\n")
+length(histo.3$breaks)
+```
+
+```{R}
+k2 <- log2(n)+1  # Formula yang diusulkan H.A. Sturges
+
+histo.4 <- hist(df$Total.day.calls, freq = FALSE, breaks = k2, 
+                main="HISTOGRAM Total Calls", xlab = "Days")
+
+cat("BREAKS :", histo.4$breaks, "\n\n")
+```
+
+```{R}
+k3 <- 2*n^(1/3) # Formula yang diusulkan Rice University
+
+histo.5 <- hist(df$Total.day.calls, freq = FALSE, breaks = k3, 
+                main="HISTOGRAM Total Calls", xlab = "Days")
+
+cat("BREAKS :", histo.5$breaks, "\n\n")
+```
+
+### Histogram dengan kurva
+
+```{R}
+# visualisasi histogram dengan kurva
+hist(df$Total.day.calls, freq = FALSE, main = "Distribusi Total Panggilan",
+     xlab = "Total Panggilan",  col = "lightgreen",
+     xlim = c(20,180), ylim = c(0,0.02))
+# Menambahkan kurva Normal
+curve(dnorm(x, mean = mean(df$Total.day.calls), sd = sd(df$Total.day.calls)), 
+      add = TRUE, col = "darkblue", lwd = 2)
+
+```
+
+### Histogram (perbandingan sebaran)
+
+```{R}
+par(mfrow = c(1,2))
+
+hist(df[df$Total.day.calls < 100,]$Total.day.calls, main = "", 
+     col = "green", xlab = "Total Panggilan dibawah 100")
+
+hist(df[df$Total.day.calls >= 100,]$Total.day.calls, main = "",
+     col = "blue", xlab = "Total Panggilan diatas 100")
+```
+
+```{R}
+plot(density(df$Total.day.calls), main = "Perbandingan", ylim = c(0, 0.022))
+lines(density(df$Total.eve.calls), col = "green")
+lines(density(df$Total.night.calls), col = "red")
+
+legend("topleft", c("Day Calls", "Evenening Calls", "Night Calls"),
+       col =c("black","green","red"), lty=1)
+```
+
+```{R}
+hist(df$Total.intl.calls, freq = FALSE, breaks=20, main = "Distribusi Total Panggilan Int",
+     xlab = "Total Panggilan",  col = "lightgreen",)
+```
+
+```{R}
+hist(df$Total.intl.charge, freq = FALSE, breaks=20, main = "Distribusi Total Panggilan Int",
+     xlab = "Total Panggilan",  col = "lightgreen",)
+```
+
+## Boxplot
+
+### Visualisasi boxplot (vertical)
+
+```{R}
+boxplot(df$Total.day.calls, main = "Distribusi Total Panggilan",
+        ylab = "Total Panggilan", horizontal = TRUE)
+```
+
+### Visualisasi boxplot
+
+```{R}
+
+boxplot(df$Total.day.calls, horizontal = TRUE, 
+        main = "Distribusi Total Panggilan", ylab = "Total Panggilan")
+```
+
+### Statistik lima Serangkai
+
+```{R}
+cat("Minimum  :", min(df$Total.day.calls)) # atau 
+cat("Q1 (25%) :", quantile(df$Total.day.calls)[1], "\n")
+cat("Q1 (25%) :", quantile(df$Total.day.calls)[2], "\n")
+cat("Q2 (Med) :", quantile(df$Total.day.calls)[3], "\n")
+cat("Q3 (75%) :", quantile(df$Total.day.calls)[4], "\n")
+cat("Maximum  :", max(df$Total.day.calls), "\n") 
+
+```
+
+```{R}
+quantile(df$Total.day.calls)[5]
+```
+
+```{R}
+quantile(df$Total.day.calls)
+```
+
+### Alternatif Kuantil (dan persentil)
+
+#### Q1, Median (Q2), Q3
+
+```{R}
+
+Q1 <- quantile(df$Total.day.calls, probs=0.25, names=F)
+Q2 <- quantile(df$Total.day.calls, probs=0.5, names=F)
+Q3 <- quantile(df$Total.day.calls, probs=0.75, names=F)
+
+cat("Kuartil 1:", Q1, "\n")
+cat("Median:", Q2, "\n")
+cat("Kuartil 3:", Q3, "\n")
+```
+
+#### Persentil ke-5 dan ke-95
+
+```{R}
+P5 <- quantile(df$Total.day.calls, probs=0.05, names=F)
+P95 <- quantile(df$Total.day.calls, probs=0.95, names=F)
+
+cat("Persentil-5:", P5, "\n")
+cat("Persentil-95:", P95, "\n")
+```
+
+#### Deteksi Amatan Pencilan
+
+```{R}
+Q1 <- quantile(df$Total.day.calls)[2]
+Q3 <- quantile(df$Total.day.calls)[4]
+
+BA <- Q3 + (3/2*(Q3-Q1)) #Batas Atas
+BB <- Q1 - (3/2*(Q3-Q1)) #Batas Bawah
+
+cat("Batas Bawah :", BB, "\n")
+cat("Batas Atas :", BA, "\n")
+```
+
+Amatan dengan nilai kurang dari Batas Bawah atau Lebih dari Batas atas merupakan amatan outlier. Mengecek amatan di bawah Batas Bawah dan di atas Batas Atas
+
+```{R}
+df[df$Total.day.calls < BB,]$Total.day.calls
+
+df[df$Total.day.calls > BA,]$Total.day.calls
+```
+
+### Boxplot By Group
+
+```{R}
+boxplot(Total.day.calls ~ Churn, data = df,
+        col = c("#FFE0B2", "#F57C00"), horizontal = TRUE)
+```
+
+```{R}
+boxplot(Total.intl.calls ~ Churn, data = df,
+        col = c("#FFE0B2", "#F57C00"), horizontal = TRUE)
+```
+
+```{R}
+boxplot(Customer.service.calls ~ Churn, data = df,
+        col = c("#FFE0B2", "#F57C00"), horizontal = TRUE)
+```
+
+### Layout
+
+Membuat Layout untuk Tampilan Histogram dan Boxplot
+
+```{R}
+nf <- layout(mat = matrix(c(1,2), 2,1, byrow = TRUE), heights = c(3,1.5))
+
+par(mar=c(3.1, 3.1, 2.1, 2.1))
+```
+
+#### Histogram
+
+```{R}
+hist(df$Total.day.calls, col = "lightblue", main = "Sebaran Total Panggilan") 
+```
+
+#### Boxplot
+
+```{R}
+boxplot(df$Total.day.calls, horizontal = T, frame = F, col = "lightgreen")
+```
+
+```{R}
+props.1 <- table(df[,c("Churn", "International.plan")])
+
+props.1
+
+prop.table(props.1)
+```
+
+```{R}
+barplot(prop.table(props.1, 2),
+        col = c("orange", "lightgreen"),  
+        legend = c("False", "True"))
+```
+
+```{R}
+barplot(prop.table(props.1, 2), col = c("orange", "lightgreen"))
+```
+
+```{R}
+cat("Mean   :", mean(df$Total.day.calls), "\n")
+
+cat("Median :", median(df$Total.day.calls), "\n")
+
+# Create the function 'Modus'
+getmode <- function(v) {
+    uniqv <- unique(v)
+    uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+cat("Mode   :", getmode(df$Total.day.calls))
+```
+
+```{R}
+getmode.alt <- function(data) {
+  # Hitung frekuensi kemunculan setiap nilai dalam data
+  frek <- table(data)
+  # Temukan nilai dengan frekuensi tertinggi
+  mode <- names(frek)[which.max(frek)]
+  return(mode)
+}
+
+cat("Mode   :", getmode.alt(df$Total.day.calls))
+```
+
+## Penyebaran Data
+
+Ukuran Penyebaran Data
+
+```{R}
+ragam <- var(df$Total.day.calls)
+sp.baku <- sd(df$Total.day.calls) # atau --> sqrt(var(df$Total.day.calls))
+jangkauan <- range(df$Total.day.calls)
+jak <- IQR(df$Total.day.calls)
+
+cat("Ragam     :", ragam, "\n")
+cat("Sp. Baku  :", sp.baku, "\n")
+cat("Jangkauan :", jangkauan, "\n")
+cat("JAK       :", jak, "\n")
+```
+
+### Coef. of Variation
+
+```{R}
+cv <- sd(df$Total.day.calls)/mean(df$Total.day.calls) * 100
+
+cat("Coefficient of Variation :", cv, "\n")
+```
+
+### Koefisien Gini
+
+```{R}
+# install.packages("DescTools")
+library("DescTools")
+gini <- DescTools::Gini(df$Total.day.calls)
+cat("\n'\", Gini Coef :", gini, "\n")
+
+plot(ineq::Lc(df$Total.day.calls),col="darkred",lwd=2)
+```
+
+### Bentuk Sebaran
+
+```{R}
+moments::skewness(df$Total.day.calls) # Kemencengan
+moments::kurtosis(df$Total.day.calls) # Keruncingan
+```
+
+# Pima Indians Diabetes
+
+Akan dilakukan eksplorasi pada data Pima Indians Diabetes. Memuat Pustaka yang diperlukan.
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+```
+
+```{r}
+setwd("D:/Kuliah/Mat/TSA Kominfo/Praktikum")
+diabetes <- read.csv('pima-indians-diabeter-database.csv', sep = ',')
+head(diabetes)
+```
+
+## Daftar variabel :
+
+-   Pregnancies : Number of times pregnant
+
+-   Glucose : Plasma glucose concentration a 2 hours in an oral glucose tolerance test
+
+-   BloodPressure : Diastolic blood pressure (mm Hg)
+
+-   SkinThickness : Triceps skin fold thickness (mm) Insulin : 2-Hour serum insulin (mu U/ml)
+
+-   BMI : Body mass index (weight in kg/(height in m)\^2)
+
+-   DiabetesPedigreeFunction : Diabetes pedigree function
+
+-   Age : Age (years)
+
+-   Outcome : Class variable (0 or 1) 268 of 768 are 1, the others are 0
+
+```{r}
+diabetes$Outcome <- as.factor(diabetes$Outcome)
+```
+
+```{R}
+summary(diabetes)
+```
+
+## Amatan
+
+### Amatan dengan missing value
+
+```{R}
+print(colSums(is.na(diabetes)))
+```
+
+### Amatan dengan nilai 0
+
+why ?
+
+```{R}
+num.zero = colSums(diabetes==0)
+print(data.frame(num.zero))
+```
+
+### Persentase amatan dengan nilai 0
+
+```{R}
+pct.zero = round(colSums(diabetes==0)/length(diabetes$Outcome), 4)*100
+
+print(data.frame(pct.zero))
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = Pregnancies)) + 
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("Pregnancies")
+plot2 <- ggplot(diabetes, aes(x = Glucose)) +
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("Glucose")
+plot3 <- ggplot(diabetes, aes(x = BloodPressure)) +
+         geom_density(lwd=1, color="darkgreen") +
+         ggtitle("BloodPressure")
+plot4 <- ggplot(diabetes, aes(x = SkinThickness)) +
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("SkinThickness")
+plot5 <- ggplot(diabetes, aes(x = Insulin)) +
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("Insulin")
+plot6 <- ggplot(diabetes, aes(x = BMI)) +
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("BMI")
+plot7 <- ggplot(diabetes, aes(x = DiabetesPedigreeFunction)) +
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("DiabetesPedigreeFunction")
+plot8 <- ggplot(diabetes, aes(x = Age)) +
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("Age")
+plot9 <- ggplot(diabetes, aes(x = Outcome)) + 
+         geom_bar(fill="darkred") +
+         ggtitle("Outcome")
+
+# Mengatur grid 3x3
+grid.arrange(
+  plot1, plot2, plot3,
+  plot4, plot5, plot6,
+  plot7, plot8, plot9,
+  ncol = 3
+)
+```
+
+## Kolom
+
+### Pregnancies
+
+```{R}
+summary(diabetes$Pregnancies)
+```
+
+```{R}
+cat("Jumlah nilai 0:", num.zero[1], "\n")
+cat("Persentase nilai 0:", pct.zero[1])
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = Pregnancies)) + 
+         geom_histogram(bins = 10, fill = "red", alpha = 0.7)
+plot2 <- ggplot(diabetes, aes(x = Pregnancies)) +
+         geom_boxplot(fill = "darkgreen", alpha=0.7)
+plot3 <- ggplot(diabetes, aes(x = Pregnancies, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(y = Pregnancies, x=Outcome)) +
+         geom_boxplot(aes(fill=Outcome)) 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+### Glucose
+
+```{R}
+summary(diabetes$Glucose)
+```
+
+```{R}
+cat("Jumlah nilai 0:", num.zero[2], "\n")
+cat("Persentase nilai 0:", pct.zero[2])
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = Glucose)) + 
+         geom_histogram(bins = 20, fill = "red", alpha = 0.7 )
+plot2 <- ggplot(diabetes, aes(x = Glucose)) +
+         geom_boxplot(fill = "darkgreen", alpha=0.7)
+plot3 <- ggplot(diabetes, aes(x = Glucose, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(y = Glucose, x=Outcome)) +
+         geom_boxplot(aes(fill=Outcome)) 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+### Blood Pressure
+
+```{R}
+summary(diabetes$BloodPressure)
+```
+
+```{R}
+cat("Jumlah nilai 0:", num.zero[3], "\n")
+cat("Persentase nilai 0:", pct.zero[3])
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = BloodPressure)) + 
+         geom_histogram(bins = 20, fill = "red", alpha = 0.7)
+plot2 <- ggplot(diabetes, aes(x = BloodPressure)) +
+         geom_boxplot(fill = "darkgreen", alpha=0.7)
+plot3 <- ggplot(diabetes, aes(x = BloodPressure, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(y = BloodPressure, x=Outcome)) +
+         geom_boxplot(aes(fill=Outcome)) 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+### Skin Thickness
+
+```{R}
+summary(diabetes$SkinThickness)
+```
+
+```{R}
+cat("Jumlah nilai 0:", num.zero[4], "\n")
+cat("Persentase nilai 0:", pct.zero[4])
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = SkinThickness)) + 
+         geom_histogram(bins = 20, fill = "red", alpha = 0.7)
+plot2 <- ggplot(diabetes, aes(x = SkinThickness)) +
+         geom_boxplot(fill = "darkgreen", alpha=0.7)
+plot3 <- ggplot(diabetes, aes(x = SkinThickness, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(y = SkinThickness, x=Outcome)) +
+         geom_boxplot(aes(fill=Outcome)) 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+### Insulin
+
+```{R}
+summary(diabetes$Insulin)
+```
+
+```{R}
+cat("Jumlah nilai 0:", num.zero[5], "\n")
+cat("Persentase nilai 0:", pct.zero[5])
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = Insulin)) + 
+         geom_histogram(bins = 20, fill = "red", alpha = 0.7)
+plot2 <- ggplot(diabetes, aes(x = Insulin)) +
+         geom_boxplot(fill = "darkgreen", alpha=0.7)
+plot3 <- ggplot(diabetes, aes(x = Insulin, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(y = Insulin, x=Outcome)) +
+         geom_boxplot(aes(fill=Outcome)) 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+### Body Mass Index
+
+```{R}
+summary(diabetes$BMI)
+```
+
+```{R}
+cat("Jumlah nilai 0:", num.zero[6], "\n")
+cat("Persentase nilai 0:", pct.zero[6])
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = BMI)) + 
+         geom_histogram(bins = 20, fill = "red", alpha = 0.7)
+plot2 <- ggplot(diabetes, aes(x = BMI)) +
+         geom_boxplot(fill = "darkgreen", alpha=0.7)
+plot3 <- ggplot(diabetes, aes(x = BMI, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(y = BMI, x=Outcome)) +
+         geom_boxplot(aes(fill=Outcome)) 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+### Diabetes Pedigree Function
+
+```{R}
+summary(diabetes$DiabetesPedigreeFunction)
+```
+
+```{R}
+cat("Jumlah nilai 0:", num.zero[7], "\n")
+cat("Persentase nilai 0:", pct.zero[7])
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = DiabetesPedigreeFunction)) + 
+         geom_histogram(bins = 20, fill = "red", alpha = 0.7)
+plot2 <- ggplot(diabetes, aes(x = DiabetesPedigreeFunction)) +
+         geom_boxplot(fill = "darkgreen", alpha=0.7)
+plot3 <- ggplot(diabetes, aes(x = DiabetesPedigreeFunction, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(y = DiabetesPedigreeFunction, x=Outcome)) +
+         geom_boxplot(aes(fill=Outcome)) 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+### Age
+
+```{R}
+summary(diabetes$Age)
+```
+
+```{R}
+cat("Jumlah nilai 0:", num.zero[8], "\n")
+cat("Persentase nilai 0:", pct.zero[8])
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = Age)) + 
+         geom_histogram(bins = 20, fill = "red", alpha = 0.7)
+plot2 <- ggplot(diabetes, aes(x = Age)) +
+         geom_boxplot(fill = "darkgreen", alpha=0.7)
+plot3 <- ggplot(diabetes, aes(x = Age, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(y = Age, x=Outcome)) +
+         geom_boxplot(aes(fill=Outcome)) 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+# Outlier Analysis
+
+Data yang digunakan merupakan data "cars" yang tersedia di R.
+
+```{r cars}
+head(cars)
+summary(cars)
+```
+
+```{r}
+str(cars)
+```
+
+```{R}
+cars <- cars[1:30, ] # data awal diambil 30 baris pertama saja
+```
+
+## Plot data awal tanpa outlier.
+
+```{R}
+plot(cars$speed, cars$dist, xlim=c(0, 28), ylim=c(0, 100), 
+     main="Speed - Dist", xlab="speed", ylab="dist", 
+     pch="*", col="red", cex=2)
+abline(lm(dist ~ speed, data=cars), col="darkgreen", lwd=4, lty=2)
+```
+
+## Penambahan outlier pada data
+
+```{R}
+cars_outliers <- data.frame(speed=c(24,24,25,25,25),
+                            dist=c(81, 80, 86, 88, 85)) # introduce outliers.
+cars_mod1 <- rbind(cars, cars_outliers)  # data dengan outlier.
+cars_mod1
+```
+
+## Plot data dengan outlier.
+
+```{R}
+par(mfrow=c(1, 2))
+# Plot data awal tanpa outlier. 
+model_1 = lm(dist ~ speed, data=cars)
+plot(cars$speed, cars$dist, xlim=c(0, 28), ylim=c(0, 100), 
+     main="Speed - Dist", xlab="speed", ylab="dist", 
+     pch="*", col="red", cex=2)
+abline(model_1, col="darkgreen", lwd=4, lty=2)
+
+model_2 = lm(dist ~ speed, data=cars_mod1)        # lm = linear model
+plot(cars_mod1$speed, cars_mod1$dist, xlim=c(0, 28), ylim=c(0, 230), 
+     main="With Outliers", xlab="speed", ylab="dist", 
+     pch="*", col="red", cex=2)
+abline(model_2, col="blue", lwd=3, lty=2)
+```
+
+```{R}
+model_1
+model_2
+```
+
+```{R}
+cars_outliers <- data.frame(speed=c(24,24,25,25,25), dist=c(81, 80, 86, 88, 85))  # introduce outliers.
+
+# menambahkan data outlier pada data cars yang asli
+cars_mod2 <- rbind(cars, cars_outliers)  # data dengan amatan berpengaruh.
+View(cars_mod2)
+
+length(cars_mod2$speed)
+```
+
+```{R}
+model_3 = lm(dist ~ speed, data=cars_mod2)
+plot(cars_mod2$speed, cars_mod2$dist, xlim=c(0, 28), ylim=c(0, 100), 
+     main="Speed - Dist", xlab="speed", ylab="dist", 
+     pch="*", col="red", cex=2)
+abline(model_3, col="darkgreen", lwd=4, lty=2)
+```
+
+```{R}
+summary(model_3)
+```
+
+```{R}
+influence.measures(model_3)
+```
+
+```{R}
+summary(model_1)
+```
+
+# Outlier: Data BPR
+
+```{R}
+setwd("D:/Kuliah/Mat/TSA Kominfo/Praktikum")  # set working directory
+bpr <- read.csv("2. eksplorasi01.csv")
+head(bpr)
+
+```
+
+```{R}
+str(bpr)
+```
+
+```{R}
+summary(bpr)
+```
+
+```{R}
+par0 <- par(mfrow=c(3,3))
+for (i in 2:10) boxplot(bpr[,i], main=colnames(bpr)[i], horizontal = TRUE)
+par(par0)
+```
+
+```{R}
+par0 <- par(mfrow=c(3,3))
+for (i in 2:10) hist(bpr[,i], main=colnames(bpr)[i], freq = FALSE)
+par(par0)
+```
+
+```{R}
+# Non Performing Loan
+boxplot(bpr$Non.Performing.Loan, main="Non Performing Loan", horizontal=T)
+```
+
+```{R}
+hist(bpr$Non.Performing.Loan, main="Non Performing Loan", breaks=20)
+```
+
+```{R}
+# Membuat QQ plot
+qqnorm(bpr$Non.Performing.Loan)
+qqline(bpr$Non.Performing.Loan)
+```
+
+## Fungsi WInsorized
+
+Fungsi WInsorized digunakan untuk mengganti nilai-nilai outlier dengan nilai "batas bawah" untuk sebelah kiri dan nilai "batas atas" untuk sebelah kanan
+
+```{R}
+winval <- function (x, tr = 0.2) 
+{
+    y <- sort(x)
+    n <- length(x)
+    
+    # menentukan indeks batas bawah 
+    ibot <- floor(tr * n) + 1   
+    
+    # menentukan indeks batas atas
+    itop <- length(x) - ibot + 1
+    
+    xbot <- y[ibot] # mengambil nilai pada indeks batas bawah
+    xtop <- y[itop] # mengambil nilai pada indeks batas atas
+    
+    #(data dengan nilai kurang dari xbot akan diganti dengan data xbot)
+    winval <- ifelse(x <= xbot, xbot, x)
+        
+    #(data dengan nilai lebih dari xtop akan diganti dengan xtop)
+    winval <- ifelse(winval >= xtop, xtop, winval)
+    winval
+}
+
+
+winmean <- function (x, tr = 0.2) 
+{
+    winmean <- mean(winval(x, tr))
+    winmean
+}
+
+winvar <- function (x, tr = 0.2) 
+{
+    winvar <- var(winval(x, tr))
+    winvar
+}
+
+winse <- function (x, tr = 0.2) 
+{
+  n = length(x)
+  h = n - 2 * floor(tr * n)
+  top = (n - 1) * sqrt(winvar(x, tr = tr))
+  bot = (h - 1) * sqrt(n)
+  se = top/bot
+  se
+}
+```
+
+```{R}
+x <- bpr$Non.Performing.Loan
+
+x.bar <- mean(x)                   # rataan sample
+x.med <- median(x)                 # median sample
+x.bar.tr.50 <- mean(x,trim=.5)      # rataan terpangkas 50% (median)
+x.bar.tr.20 <- mean(x,trim=.2)      # rataan terpangkas 20%
+x.bar.tr.10 <- mean(x,trim=.1)      # rataan terpangkas 10%
+x.winmean <- winmean(x)             # winsorized mean 20%
+x.winmean.10 <- winmean(x, tr=0.1)  # winsorized mean 10%
+
+cat("Mean   :", x.bar, "\n")
+cat("Median :", x.med, "\n\n")
+cat("Tr. mean (50%)  :", x.bar.tr.50, "\n")
+cat("Tr. mean (20%)  :", x.bar.tr.20, "\n")
+cat("Tr. mean (10%)  :", x.bar.tr.10, "\n")
+cat("win. mean (20%) :", x.winmean, "\n")
+cat("win. mean (10%) :", x.winmean.10, "\n\n")
+
+cat("Quatile :", quantile(x))
+```
+
+```{R}
+IQR(x)
+mad(x)
+winvar(x)            # winsorized variance .20
+winvar(x, tr=0.1)    # winsorized variance .10
+```
+
+## Selang Kepercayaan
+
+```{R}
+trimse <- function (x, tr = 0.2) 
+{
+   trimse <- sqrt(winvar(x, tr))/((1 - 2 * tr) * sqrt(length(x)))
+   trimse
+}
+
+se.med <- sqrt((pi/2)*(mad(x)^2/length(x)))  # s.e  median
+```
+
+```{R}
+# SK 95% Mean
+ci.mean <- t.test(x)$conf.int  
+ci.level <- attr(t.test(x)$conf.int, "conf.level") 
+
+# SK 95% Trimmed Mean
+ci.tr.mean <- c(mean(x,trim=.2)-qnorm(0.975)*trimse(x),mean(x,trim=.2)+qnorm(0.975)*trimse(x))
+
+# SK 95% Median
+ci.med <- c(median(x)-qnorm(0.975)*se.med,median(x)+qnorm(0.975)*se.med) 
+
+# SK 95% Winsorized Mean
+ci.win.mean <- c(winmean(x)-qnorm(0.975)*winse(x),winmean(x)+qnorm(0.975)*winse(x))
+
+cat("Selang Kepercayaan     : ", ci.level, "\n\n")
+cat("Mean      : ", ci.mean, "\n")
+cat("Tr. Mean  : ", ci.tr.mean, "\n")
+cat("Median    : ", ci.med, "\n")
+cat("Win. Mean : ", ci.win.mean, "\n utk 20% (default di fungsi kita)")
+```
+
+```{R}
+library(MASS)
+```
+
+```{R}
+# M-ESTIMATOR
+x <- bpr$Non.Performing.Loan
+
+hub.1 <- hubers(x)
+hub.1$mu
+hub.1$s
+
+hub.2 <- hubers(x, k=1.345)
+hub.2$mu
+hub.2$s
+```
+
+```{R}
+hub.3 <- hubers(x,mu=median(x))
+hub.3$mu
+hub.3$s
+
+hub.4 <- hubers(x,s=1)
+hub.4$mu
+hub.4$s
+```
+
+# Outlier: Data Handphone
+
+```{R}
+data(phones)
+str(phones)
+data.frame(phones)
+```
+
+```{R}
+attach(phones)
+plot(year,calls)
+```
+
+```{R}
+plot(phones$year,phones$calls, pch=19, cex=2, col="darkred")
+```
+
+```{R}
+fit.ols <- lm(calls~year, data=phones) # ols = ordinary linear square
+              # calls sebagai peubah y dan year sebgai peubah x
+summary(fit.ols)
+```
+
+```{R}
+par(mfrow=c(1,4))
+plot(fit.ols,1:2)
+plot(fit.ols,4)
+abline(fit.ols$coef)
+
+hmat.p <- hat(model.matrix(fit.ols))
+h.phone <- hat(hmat.p)
+cook.d <- cooks.distance(fit.ols)
+plot(h.phone/(1-h.phone),cook.d,xlab="h/(1-h)",ylab="Cook distance")
+```
+
+```{R}
+fit.hub <- rlm(calls~year,maxit=50, data=phones)
+summary(fit.hub,cor=F)
+```
+
+```{R}
+par(mfrow=c(1,3))
+plot(fit.hub,1)
+plot(fit.hub,2)
+abline(fit.hub$coef)
+```
+
+```{R}
+fit.hub2 <- rlm(calls~year,scale.est="proposal 2", data=phones)
+summary(fit.hub2,cor=F)
+```
+
+```{R}
+fit.lms <- lqs(calls~year,method="lms", data=phones)
+
+fit.lms
+```
+
+```{R}
+fit.lts <- lqs(calls~year,method="lts", data=phones)
+fit.lts
+```
+
+```{R}
+par(mfrow=c(1,2))
+plot(fit.lms$fit,fit.lms$res,main="lms")
+plot(fit.lts$fit,fit.lts$res,main="lts")
+par(mfrow=c(1,1))
+```
+
+```{R}
+data.frame(diabetes)
+```
+
+# Outlier: Data Pima Indian Diabetes
+
+## Pemeriksaan Data
+
+```{R}
+setwd("D:/Kuliah/Mat/TSA Kominfo/Praktikum")
+diabetes <- read.csv("pima-indians-diabeter-database.csv", sep = ',')
+library(ggplot2)
+library(mlbench) # data pima Indian Dataset
+library(cowplot) # menampilkan plot dalam bentuk Grid
+library(caret) # features scaling
+```
+
+```{R}
+str(diabetes)
+```
+
+```{R}
+head(diabetes)
+```
+
+## Ringkasan dan Sebaran Data
+
+```{R}
+dim(diabetes)
+summary(diabetes)
+```
+
+### Jumlah Nilai NA
+
+```         
+  dari summary di bawah, terlihat tidak terdapat data NA
+```
+
+```{R}
+data.frame(colSums(is.na(diabetes)))
+```
+
+### Jumlah Nilai 0
+
+terlihat banyak kolom memiliki nilai 0 yang seharusnya tidak mungkin 0. Seperti glucose yang menunjukkan kadar gula atau pressure yang menunjukkan tekanan darah, serta kolom lainnya. Kondisi ini perlu ditangani karena merupakan informasi yang keliru.
+
+```{R}
+data.frame(colSums(diabetes==0))
+```
+
+### Persentase Jumlah Nilai 0 di setiap kolom
+
+```{R}
+data.frame(round(colSums(diabetes==0)/nrow(diabetes), 4)*100)
+```
+
+```{R}
+library(gridExtra)
+plot1 <- ggplot(diabetes, aes(x = Pregnancies)) + 
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("Pregnancies")
+plot2 <- ggplot(diabetes, aes(x = Glucose)) +
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("Glucose")
+plot3 <- ggplot(diabetes, aes(x = BloodPressure)) +
+         geom_density(lwd=1, color="darkgreen") +
+         ggtitle("BloodPressure")
+plot4 <- ggplot(diabetes, aes(x = SkinThickness)) +
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("SkinThickness")
+plot5 <- ggplot(diabetes, aes(x = Insulin)) +
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("Insulin")
+plot6 <- ggplot(diabetes, aes(x = BMI)) +
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("BMI")
+plot7 <- ggplot(diabetes, aes(x = DiabetesPedigreeFunction)) +
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("DiabetesPedigreeFunction")
+plot8 <- ggplot(diabetes, aes(x = Age)) +
+         geom_density(lwd=1, color="darkgreen") + 
+         ggtitle("Age")
+plot9 <- ggplot(diabetes, aes(x = Outcome)) + 
+         geom_bar(fill="darkred") +
+         ggtitle("Outcome")
+
+# Mengatur grid 3x3
+grid.arrange(
+  plot1, plot2, plot3,
+  plot4, plot5, plot6,
+  plot7, plot8, plot9,
+  ncol = 3
+)
+```
+
+```{R}
+plots <- lapply(names(diabetes), function(var_x){
+  p <- 
+    ggplot(diabetes) +
+    aes_string(var_x)
+
+  if(var_x %in% names(diabetes)[1:8]) {
+    p <- p + geom_density(lwd=1, color="darkgreen")
+
+  } else if(var_x =="Outcome") {
+    p <- p + geom_bar(fill="darkred")
+  } 
+
+})
+
+plot_grid(plotlist = plots)
+```
+
+## Kolom Pregnancies
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = Pregnancies)) + 
+         geom_histogram(bins = 10, fill = "red", alpha = 0.7)
+plot2 <- ggplot(diabetes, aes(x = Pregnancies)) +
+         geom_boxplot(fill = "red", alpha=0.6) +theme_classic()
+plot3 <- ggplot(diabetes, aes(x = Pregnancies, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(x = Pregnancies, group=Outcome)) +
+         geom_boxplot(aes(fill = Outcome)) +theme_classic() 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+```{R}
+summary(diabetes$Pregnancies)
+```
+
+Sebaran nilai Pregnancies cenderung menjulur jauh ke kanan.
+
+Menurut visualisasi boxplot, terdapat beberapa data outlier namun secara umum masih dalam batas yang wajar. Apalagi jika melihat boxplot antara Pregnancies dan Outcome sebaran data relatif cukup baik.
+
+Namun jika ingin dilakukan penanganan maka terdapat beberapa alternatif:
+
+-   Menghapus data Outlier
+
+-   Mengganti data dengan mean/ median data yang tidak outlier
+
+-   Flooring & Capping: Mengganti data dengan nilai max teoritis (Misal Q1 - 1.5xIQR dan Q3 + 1.5xIQR)
+
+### Menghapus Data Outlier
+
+Melihat dari boxplot tunggal, terdapat 3 titik data outlier, sedangkan jika melihat berdasarkan kelompok diabetes atau tidak maka terdapat dua outlier pada kelompok tidak diabetes. Misalkan kita menggunakan indikator dari boxplot tunggal, maka untuk menghapus data tersebut:
+
+```{R}
+q1 <-quantile(diabetes$Pregnancies, prob = 0.25, names = F)
+q3 <-quantile(diabetes$Pregnancies, prob = 0.75, names = F)
+IQR <- q3 - q1
+max <- q3 + 1.5*IQR
+```
+
+```{R}
+# Hapus data yang lebih besar dari max yaitu 
+
+# R base
+(diabetes[diabetes$Pregnancies > max,])
+
+# dplyr
+#library(dplyr)
+#(diabetes %>% filter(Pregnancies > max))
+```
+
+### Mengganti dengan Mean/Median dari data yang tidak Outlier
+
+```{R}
+non.outlier <- diabetes[diabetes$Pregnancies <= max, "Pregnancies"]
+mean.non <- mean(non.outlier)
+med.non <- median(non.outlier)
+
+# Update outlier data menggunakan mean atau median
+
+# R base
+diabetes$Pregnancies <- ifelse(diabetes$Pregnancies > max, med.non, diabetes$Pregnancies)
+
+# dplyr
+# diabetes <- diabetes %>% mutate(pregnant = ifelse(pregnant > max, med.non, pregnant))
+```
+
+### Mengganti dengan Nilai Max dari data yang tidak Outlier
+
+Sama seperti sebelumnya, cukup mengganti nilai outlier dengan nilai minimum/maksimum
+
+```{R}
+# Update outlier data menggunakan nilai max
+
+# R base
+# diabetes$Pregnancies <- ifelse(diabetes$Pregnancies > max, max,
+#                              diabetes$Pregnancies)
+
+# dplyr
+# diabetes <- diabetes %>% mutate(pregnant = ifelse(pregnant > max, max, pregnant))
+```
+
+### Plot Setelah Modifikasi
+
+```{R}
+pl2 <- ggplot(diabetes, aes(y=Pregnancies))
+pl2 + 
+  geom_boxplot(fill="red", alpha=0.6) + coord_flip() + theme_classic()
+```
+
+## Kolom Glucose
+
+```{R}
+summary(diabetes$Glucose)
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = Glucose)) + 
+         geom_histogram(bins = 10, fill = "red", alpha = 0.7)
+plot2 <- ggplot(diabetes, aes(x = Glucose)) +
+         geom_boxplot(fill = "red", alpha=0.6) +theme_classic()
+plot3 <- ggplot(diabetes, aes(x = Glucose, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(x = Glucose, group=Outcome)) +
+         geom_boxplot(aes(fill = Outcome)) +theme_classic() 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+Pada kolom ini sebaran data relatif simetris, dan secara umum tidak terdapat data outlier kecuali pada data bernilai 0.
+
+Nilai Glucose menunjukkan kadar gula dalam darah, sehingga tidak mungkin bernilai 0. Perlu dicek juga apakah terdapat nilai-nilai lainnya yang tidak masuk akal (misalkan menurut Dokter).Namun pada contoh ini kita hanya akan fokus pada nilai 0 saja, kita anggap nilai lainnya masih masuk dalam rentang nilai yang memungkinkan.
+
+Cek jumlah data bernilai 0:
+
+```{R}
+length(which(diabetes$Glucose == 0))
+```
+
+Terdapat 5 data yang memiliki nilai Glucose = 0 yang perlu ditangani. Jumlah ini relatif sedikit jadi dapat saja kita 5 baris ini atau alternatif lain kita amputasi misal dengan mean atau median.
+
+### Menghapus Data
+
+```{R}
+# R base
+# diabetes <- diabetes[diabetes$Glucose > 0,] 
+
+# dplyr
+#diabetes <- diabetes %>% filter(Glucose > 0)
+```
+
+### Mengganti dengan Nilai Mean atau Median
+
+Perlu diperhatikan, karena data bernilai 0 (bukan NA) maka perlu berhati-hati khususnya dalam menghitung mean.
+
+Jika data bernilai NA, penghitungan mean dapat langsung dilakukan pada seluruh data, karena nilai NA akan diabaikan. Namun jika data 0 maka nilai tersebut akan dimasukkan dalam penghitungan rata-rata. Oleh karena itu, perlu difilter terlebih dahulu data yang tidak bernilai 0.
+
+Pemilihan mean biasanya untuk data yang memiliki sebaran simetris, sementara untuk data dengan sebaran yang menjulur dapat menggunakan nilai median.
+
+Melihat dari boxplot, tampat terdapat perbedaan sebaran nilai Glucose antara yang terkena diabetes dan yang tidak. Penderita Diabetes cenderung memiliki nilai Glucose yang lebih tinggi dibandingkan yang bukan penderita diabetes.
+
+Opsi yang cocok adalah menggunakan mean atau median per kelompok. Data Glucose bernilai 0 mengacu pada kelompok diabetes diganti dengan mean atau median pada kelompok tersebut begitu pula sebaliknya.
+
+```{R}
+# Mengambil data glucose yang tidak bernilai 0
+glucose.pos <- diabetes[(diabetes$Glucose != 0) & (diabetes$Outcome == "1"), "Glucose"]
+glucose.neg <- diabetes[(diabetes$Glucose != 0) & (diabetes$Outcome == "0"), "Glucose"]
+
+# Menghitung mean glucose masing-masing kelompok
+med.gluc.pos <- median(glucose.pos)
+med.gluc.neg <- median(glucose.neg)
+
+# Mengganti nilai 0 dengan mean
+
+# R base
+diabetes$Glucose <- ifelse(diabetes$Glucose == 0, 
+                           ifelse(diabetes$Outcome == "1", med.gluc.pos, med.gluc.neg), 
+                           diabetes$Glucose)
+
+# dplyr
+# diabetes <- diabetes %>% mutate(glucose = ifelse(glucose == 0, 
+#                                                 ifelse(diabetes=="pos",
+# med.gluc.pos, med.gluc.neg), 
+#                                                 glucose))
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = Glucose)) + 
+         geom_histogram(bins = 10, fill = "red", alpha = 0.7) 
+plot2 <- ggplot(diabetes, aes(x = Glucose)) +
+         geom_boxplot(fill = "red", alpha=0.6) +theme_classic()
+plot3 <- ggplot(diabetes, aes(x = Glucose, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(x = Glucose, group=Outcome)) +
+         geom_boxplot(aes(fill = Outcome)) +theme_classic() 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+```{R}
+summary(diabetes$Glucose)
+```
+
+## Kolom Blood Pressure
+
+Kolom BloodPressure berisi data tekanan darah yang memuat nilai 0 (tidak mungkin terjadi)
+
+Selain itu terdapat nilai-nilai outlier di kedua sisinya.
+
+```{R}
+summary(diabetes$BloodPressure)
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = BloodPressure)) + 
+         geom_histogram(bins = 10, fill = "red", alpha = 0.7) 
+plot2 <- ggplot(diabetes, aes(x = BloodPressure)) +
+         geom_boxplot(fill = "red", alpha=0.6) +theme_classic()
+plot3 <- ggplot(diabetes, aes(x = BloodPressure, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(x = BloodPressure, group=Outcome)) +
+         geom_boxplot(aes(fill = Outcome)) +theme_classic() 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+### Data bernilai 0
+
+```{R}
+length(which(diabetes$BloodPressure == 0))
+```
+
+```{R}
+library(dplyr)
+zero.BloodPressure <- diabetes %>%
+  filter(BloodPressure == 0) %>% 
+  group_by(Outcome) %>%
+  summarise(count = length(BloodPressure))
+zero.BloodPressure
+```
+
+Terdapat 35 data dengan nilai BloodPressure == 0. Untuk kelompok penderita diabetes terdapat 16 data bernilai 0 sedangkan untuk kelompok bukan penderita diabetes terdapat 19 data bernilai 0. Melihat dari boxplot kelompok, tampaknya tidak terdapat perbedaan yang berarti antara sebaran nilai BloodPressure pada kelompok diabetes maupun tidak. Oleh karena itu, kita mungkin cukup menggunakan mean data keseluruhan (yang tidak bernilai 0) untuk imputasi data 0.
+
+Pada data BloodPressure terindikasi terdapat beberapa amatan outlier, dapat pula dilakukan penanganan seperti pada bagian sebelumnya (pregnant). Namun di sini tidak akan dilakukan penanganan.
+
+### Mengganti nilai 0 dengan Nilai Mean
+
+```{R}
+# Mengambil data BloodPressure yang tidak bernilai 0
+BloodPressure <- diabetes[diabetes$BloodPressure != 0, "BloodPressure"]
+
+# Menghitung mean pressure
+mean.BloodPressure <- mean(diabetes$BloodPressure)
+
+# Mengganti nilai 0 dengan mean
+
+# R base
+diabetes$BloodPressure <- ifelse(diabetes$BloodPressure == 0, mean.BloodPressure, diabetes$BloodPressure)
+
+# dplyr
+# diabetes <- diabetes %>% mutate(pressure = ifelse(pressure == 0, mean.pressure, pressure))
+```
+
+### Plot Setelah Imputasi
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = BloodPressure)) + 
+         geom_histogram(bins = 10, fill = "red", alpha = 0.7) 
+plot2 <- ggplot(diabetes, aes(x = BloodPressure)) +
+         geom_boxplot(fill = "red", alpha=0.6) +theme_classic()
+plot3 <- ggplot(diabetes, aes(x = BloodPressure, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(x = BloodPressure, group=Outcome)) +
+         geom_boxplot(aes(fill = Outcome)) +theme_classic() 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+## Kolom Skin Thickness
+
+Kolom SkinThickness menunjukkan ketebalan lipatan kulit(mm).
+
+Data ini juga seharusnya tidak dapat bernilai 0.
+
+```{R}
+summary(diabetes$SkinThickness)
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = SkinThickness)) + 
+         geom_histogram(bins = 10, fill = "red", alpha = 0.7) 
+plot2 <- ggplot(diabetes, aes(x = SkinThickness)) +
+         geom_boxplot(fill = "red", alpha=0.6) +theme_classic()
+plot3 <- ggplot(diabetes, aes(x = SkinThickness, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(x = SkinThickness, group=Outcome)) +
+         geom_boxplot(aes(fill = Outcome)) +theme_classic() 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+```{R}
+length(which(diabetes$SkinThickness == 0))
+length(which(diabetes$SkinThickness == 0))/length(diabetes$SkinThickness)
+```
+
+Jumlah data bernilai 0 untuk kolom SkinThickness cukup besar yaitu sekitar 30%.
+
+Dapat dilakukan imputasi seperti kolom sebelumnya. Namun, jika dirasa terlalu banyak yang diimputasi mungkin sebaiknya kolom ini dapat dibuang dari model.
+
+### Menghapus Kolom SkinThickness
+
+```{R}
+diabetes$SkinThickness <- NULL
+```
+
+## Kolom Insulin
+
+Sama seperti kolom SkinThickness, kolom Insulin juga tidak mungkin bernilai 0. Namun pada data terdapat nilai 0 yang sangat banyak bahkan hampir 50%.
+
+Oleh karena itu, penanganan yang paling tepat adalah membuang kolom tersebut dari model.
+
+```{R}
+summary(diabetes$Insulin)
+```
+
+```{R}
+length(which(diabetes$Insulin == 0))
+length(which(diabetes$Insulin == 0))/length(diabetes$Insulin)
+```
+
+### Menghapus kolom Insulin
+
+```{R}
+diabetes$Insulin <- NULL
+```
+
+## Kolom BMI
+
+```{R}
+summary(diabetes$BMI)
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = BMI)) + 
+         geom_histogram(bins = 10, fill = "red", alpha = 0.7) 
+plot2 <- ggplot(diabetes, aes(x = BMI)) +
+         geom_boxplot(fill = "red", alpha=0.6) +theme_classic()
+plot3 <- ggplot(diabetes, aes(x = BMI, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(x = BMI, group=Outcome)) +
+         geom_boxplot(aes(fill = Outcome)) +theme_classic() 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+```{R}
+length(which(diabetes$BMI == 0))
+length(which(diabetes$BMI == 0))/length(diabetes$BMI)
+```
+
+### Mengganti Nilai 0 dengan Nilai Mean
+
+```{R}
+# Mengambil data mass yang tidak bernilai 0
+BMI <- diabetes[diabetes$BMI != 0, "BMI"]
+
+# Menghitung mean mass
+mean.BMI <- mean(diabetes$BMI)
+
+# Mengganti nilai 0 dengan mean
+
+# R base
+diabetes$BMI <- ifelse(diabetes$BMI == 0, mean.BMI, diabetes$BMI)
+
+# dplyr
+# diabetes <- diabetes %>% mutate(mass = ifelse(mass == 0, mean.mass, mass))
+```
+
+### Mengganti Nilai Data Outlier
+
+Dalam kolom BMI ini, dianggap nilai BMI di atas (Q3 +1.5 IQR) merupakan nilai yang tidak masuk akal.
+
+Maka akan dihapus amatan dengan BMI \> 50 atau mengganti dengan nilai (Q3 + 1.5 IQR)
+
+```{R}
+q1 <- quantile(diabetes$BMI, probs=0.25, names=F)
+q3 <- quantile(diabetes$BMI, probs=0.75, names=F)
+IQR <- q3 - q1
+max <- q3 + 1.5*IQR
+
+# R base
+diabetes$BMI <- ifelse(diabetes$BMI > max, max, diabetes$BMI)
+
+# dplyr
+# diabetes <- diabetes %>% mutate(mass = ifelse(mass > max, max, mass))
+```
+
+## Setelah melakukan Imputasi Pada Kolom BMI
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = BMI)) + 
+         geom_histogram(bins = 10, fill = "red", alpha = 0.7) 
+plot2 <- ggplot(diabetes, aes(x = BMI)) +
+         geom_boxplot(fill = "red", alpha=0.6) +theme_classic()
+plot3 <- ggplot(diabetes, aes(x = BMI, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(x = BMI, group=Outcome)) +
+         geom_boxplot(aes(fill = Outcome)) +theme_classic() 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+## Kolom Diabetes Pedigree Function
+
+```{R}
+summary(diabetes$DiabetesPedigreeFunction)
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = DiabetesPedigreeFunction)) + 
+         geom_histogram(bins = 10, fill = "red", alpha = 0.7) 
+plot2 <- ggplot(diabetes, aes(x = DiabetesPedigreeFunction)) +
+         geom_boxplot(fill = "red", alpha=0.6) +theme_classic()
+plot3 <- ggplot(diabetes, aes(x = DiabetesPedigreeFunction, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(x = DiabetesPedigreeFunction, group=Outcome)) +
+         geom_boxplot(aes(fill = Outcome)) +theme_classic() 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+```{R}
+length(which(diabetes$DiabetesPedigreeFunction == 0))
+```
+
+Untuk melakukan penanganan outlier dapat menggunakan cara seperti sebelumnya. Namun pada kolom Diabetes Pedigree Function ini akan dibiarkan, karena nilai-nilai masih masuk dalam rentang nilai yang memungkinkan.
+
+## Kolom Age
+
+```{R}
+summary(diabetes$Age)
+```
+
+```{R}
+plot1 <- ggplot(diabetes, aes(x = Age)) + 
+         geom_histogram(bins = 10, fill = "red", alpha = 0.7) 
+plot2 <- ggplot(diabetes, aes(x = Age)) +
+         geom_boxplot(fill = "red", alpha=0.6) +theme_classic()
+plot3 <- ggplot(diabetes, aes(x = Age, group=Outcome)) + 
+         geom_density(lwd=0.1, aes(fill=Outcome), alpha= 0.5) 
+plot4 <- ggplot(diabetes, aes(x = Age, group=Outcome)) +
+         geom_boxplot(aes(fill = Outcome)) +theme_classic() 
+
+# Mengatur grid
+grid.arrange(
+  plot1, plot2, plot3, plot4, ncol = 2
+)
+```
+
+Tidak terdapat data yang aneh pada kolom Age sehingga akan dibiarkan apa adanya.
+
+## Features Scalling
+
+Features Scalling adalah proses pengubahan skala pada pubah-peubah sehingga memiliki skala yang sama. Banyak algoritma machine learning, terutama yang berbasis jarak ataupun Neural Network akan bekerja lebih optimal jika skala setiap fitur sama.
+
+Selain itu, dalam kasus model regresi, ada skala data yang sama, semakin besar nilai koefisiennya (mutlak) maka semakin besar pengaruhnya terhadap model.
+
+Features Scalling tidak merubah pola hubungan antara peubah tersebut dengan peubah respon.
+
+Contoh features scalling: 1. Standarize: mengubah setiap fitur menjadi distribusi dengan mean 0 dan variansi 1 dengan formula x_i scaled = (x_i - x_bar)/ s 2. Normalize: mengubah setiap fitur sehingga memiliki nilai pada rentang [0,1] dengan formula x_i scaled = (x_i - min(x))/(max(x) - min(x))
+
+### Standardized
+
+```{R}
+summary(diabetes[,1:6])
+```
+
+```{R}
+sapply(diabetes[,1:6], sd)
+```
+
+### Standarisasi Fitur
+
+```{R}
+preprocessParams <- preProcess(diabetes[,1:6], method=c("center", "scale"))
+standardized <- predict(preprocessParams, diabetes[,1:6])
+
+summary(standardized)
+```
+
+```{R}
+sapply(standardized, sd)
+```
+
+### Normalize
+
+```{R}
+# Normalisasi Fitur
+preprocessParams <- preProcess(diabetes[,1:6], method=c("range"))
+normalized <- predict(preprocessParams, diabetes[,1:6])
+
+summary(normalized)
+```
+
+### Plot Sebaran Asal
+
+```{R}
+plots <- lapply(names(diabetes[,1:6]), function(var_x){
+  p <- 
+    ggplot(diabetes) +
+    aes_string(var_x)
+
+  if(is.numeric(diabetes[[var_x]])) {
+    p <- p + geom_density(lwd=1, color="darkgreen")
+
+  } else {
+    p <- p + geom_bar(fill="darkred")
+  } 
+
+})
+
+plot_grid(plotlist = plots)
+```
+
+### Hasil Standarisasi
+
+Plot Sebaran Hasil Standarisasi
+
+```{R}
+plots <- lapply(names(standardized), function(var_x){
+  p <- 
+    ggplot(standardized) +
+    aes_string(var_x) + 
+    geom_density(lwd=1, color="darkgreen")
+})
+
+plot_grid(plotlist = plots)
+```
+
+### Hasil Normalisasi
+
+Plot Sebaran Hasil Normalisasi
+
+```{R}
+plots <- lapply(names(normalized), function(var_x){
+  p <- 
+    ggplot(normalized) +
+    aes_string(var_x) + 
+    geom_density(lwd=1, color="darkgreen")
+})
+
+plot_grid(plotlist = plots)
+```
+
+## Transformasi Box-Cox
+
+Transformasi umumnya digunakan untuk merubah sebaran suatu feature ketika feature tersebut tidak normal sehingga menjadi mendekati sebaran normal.
+
+Box-Cox Transformation biasanya dilakukan pada variabel dependen (Y) dalam analisis regresi atau analisis varian (ANOVA). Ini dilakukan untuk memastikan bahwa variabel dependen memiliki distribusi yang lebih dekat dengan normal sehingga asumsi distribusi normal dalam model regresi atau ANOVA terpenuhi.
+
+Transformasi ini juga dapat digunakan pada variabel independen (X) jika diperlukan, tergantung pada distribusi data dan tujuan analisis. Namun, transformasi pada variabel independen lebih jarang dilakukan karena memiliki implikasi terhadap interpretasi model akhir.
+
+```{R}
+preprocessParams <- preProcess(diabetes[,1:6], method=c("BoxCox"))
+print(preprocessParams)
+```
+
+```{R}
+transformed <- predict(preprocessParams, diabetes[,1:6])
+summary(transformed)
+```
+
+```{R}
+plots <- lapply(names(transformed), function(var_x){
+  p <- 
+    ggplot(transformed) +
+    aes_string(var_x)  + 
+    geom_density(lwd=1, color="darkgreen")
+})
+
+plot_grid(plotlist = plots)
+```
